@@ -17,6 +17,7 @@ import ru.vsu.cs.uvarov_d_p.service.LibraryService;
 import ru.vsu.cs.uvarov_d_p.util.IsbnValidator;
 import ru.vsu.cs.uvarov_d_p.util.impl.IsbnValidatorImpl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,14 +42,24 @@ class LibraryServiceImplTest {
         service = new LibraryServiceImpl(repository, validator);
     }
 
-    private void assertBookStateUnchanged(Book expected, Book actual) {
-        assertEquals(expected.getTitle(), actual.getTitle());
-        assertEquals(expected.getAuthor(), actual.getAuthor());
-        assertEquals(expected.getIsbn(), actual.getIsbn());
-        assertEquals(expected.getGenres(), actual.getGenres());
-        assertEquals(expected.getStatus(), actual.getStatus());
-        assertEquals(expected.getBorrowerName(), actual.getBorrowerName());
-        assertEquals(expected.getUpdatedAt(), actual.getUpdatedAt());
+    private record BookSnapshot(String title, String author, String isbn, List<String> genres,
+                                BookStatus status, String borrowerName, LocalDateTime updatedAt) {
+    }
+
+    private BookSnapshot snapshot(Book book) {
+        return new BookSnapshot(
+                book.getTitle(),
+                book.getAuthor(),
+                book.getIsbn(),
+                List.copyOf(book.getGenres()),
+                book.getStatus(),
+                book.getBorrowerName(),
+                book.getUpdatedAt()
+        );
+    }
+
+    private void assertBookUnchanged(BookSnapshot before, UUID bookId) {
+        assertEquals(before, snapshot(service.getBookById(bookId)), "Состояние книги не должно измениться");
     }
 
     @Test
@@ -146,47 +157,47 @@ class LibraryServiceImplTest {
     @Test
     @DisplayName("editBook выбрасывает BusinessRuleException при попытке занять ISBN другой книги, поля не меняются")
     void shouldThrowBusinessRuleExceptionWhenEditingWithAnotherBooksIsbn() {
-        Book book1 = service.addBook("Книга 1", "Автор 1", "9785446109609", List.of("IT"));
+        service.addBook("Книга 1", "Автор 1", "9785446109609", List.of("IT"));
         Book book2 = service.addBook("Книга 2", "Автор 2", "9785750200641", List.of("IT"));
+        BookSnapshot before = snapshot(book2);
 
         BusinessRuleException ex = assertThrows(
                 BusinessRuleException.class,
-                () -> service.editBook(book2.getId(), "Измененная", "Автор 2", "978-5-4461-0960-9", List.of("IT"))
+                () -> service.editBook(book2.getId(), "Измененная", "Новый автор", "978-5-4461-0960-9", List.of("Наука"))
         );
         assertEquals("Книга с ISBN 9785446109609 уже есть в каталоге", ex.getMessage());
 
-        Book reloadedBook2 = service.getBookById(book2.getId());
-        assertBookStateUnchanged(book2, reloadedBook2);
+        assertBookUnchanged(before, book2.getId());
     }
 
     @Test
     @DisplayName("editBook выбрасывает ValidationException при неверном формате ISBN, книга не меняется")
     void shouldThrowValidationExceptionWhenEditingWithInvalidIsbnFormat() {
         Book book = service.addBook("Название", "Автор", "9785446109609", List.of("IT"));
+        BookSnapshot before = snapshot(book);
 
         ValidationException ex = assertThrows(
                 ValidationException.class,
-                () -> service.editBook(book.getId(), "Новое", "Автор", "bad-isbn", List.of("IT"))
+                () -> service.editBook(book.getId(), "Новое", "Новый автор", "bad-isbn", List.of("Наука"))
         );
         assertEquals("Некорректный формат ISBN", ex.getMessage());
 
-        Book reloaded = service.getBookById(book.getId());
-        assertBookStateUnchanged(book, reloaded);
+        assertBookUnchanged(before, book.getId());
     }
 
     @Test
     @DisplayName("editBook атомарен: при невалидных title или genres ни одно поле книги не изменяется")
     void shouldMaintainAtomicityWhenEditFailsValidation() {
         Book book = service.addBook("Чистый код", "Роберт Мартин", "9785446109609", List.of("IT"));
+        BookSnapshot before = snapshot(book);
 
         ValidationException ex = assertThrows(
                 ValidationException.class,
-                () -> service.editBook(book.getId(), "Чистый код", "Роберт Мартин", "9785750200641", List.of("1", "2", "3", "4"))
+                () -> service.editBook(book.getId(), "Новое название", "Новый автор", "9785750200641", List.of("1", "2", "3", "4"))
         );
         assertEquals("Количество жанров не может превышать 3", ex.getMessage());
 
-        Book reloaded = service.getBookById(book.getId());
-        assertBookStateUnchanged(book, reloaded);
+        assertBookUnchanged(before, book.getId());
     }
 
     @Test
@@ -217,6 +228,17 @@ class LibraryServiceImplTest {
 
         assertEquals(BookStatus.BORROWED, edited.getStatus());
         assertEquals("Алексей", edited.getBorrowerName());
+    }
+
+    @Test
+    @DisplayName("editBook сохраняет жанры, если ему передан текущий список жанров самой книги")
+    void shouldKeepGenresWhenEditingWithBooksOwnGenresList() {
+        Book book = service.addBook("Чистый код", "Роберт Мартин", "9785446109609", List.of("IT", "Архитектура"));
+
+        Book edited = service.editBook(book.getId(), "Новое название", "Роберт Мартин", "9785446109609", book.getGenres());
+
+        assertEquals("Новое название", edited.getTitle());
+        assertEquals(List.of("IT", "Архитектура"), edited.getGenres());
     }
 
     @Test
@@ -455,10 +477,10 @@ class LibraryServiceImplTest {
     }
 
     @Test
-    @DisplayName("checkIsbnAvailable валидирует доступность ISBN и не сохраняет данные в каталог")
+    @DisplayName("checkIsbnAvailable валидирует доступность ISBN и не изменяет каталог")
     void shouldCheckIsbnAvailabilityWithoutModifyingCatalog() {
         Book existing = service.addBook("Чистый код", "Роберт Мартин", "9785446109609", List.of("IT"));
-        List<Book> booksBefore = service.getAllBooks();
+        List<BookSnapshot> before = service.getAllBooks().stream().map(this::snapshot).toList();
 
         service.checkIsbnAvailable("978-5-7502-0064-1", null);
 
@@ -476,6 +498,7 @@ class LibraryServiceImplTest {
 
         service.checkIsbnAvailable("978-5-4461-0960-9", existing.getId());
 
-        assertEquals(booksBefore, service.getAllBooks());
+        List<BookSnapshot> after = service.getAllBooks().stream().map(this::snapshot).toList();
+        assertEquals(before, after, "checkIsbnAvailable не должен менять каталог");
     }
 }

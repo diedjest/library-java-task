@@ -26,6 +26,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Тестирование сущности Book")
 class BookTest {
 
+    private static final LocalDateTime PAST_CREATED_AT = LocalDateTime.now().minusDays(2);
+    private static final LocalDateTime PAST_UPDATED_AT = LocalDateTime.now().minusDays(1);
+
+    private Book bookWithPastTimestamps(BookStatus status, String borrowerName) {
+        return new Book(UUID.randomUUID(), "Чистый код", "Роберт Мартин", "9785446109609",
+                List.of("IT"), status, borrowerName, PAST_CREATED_AT, PAST_UPDATED_AT);
+    }
+
     @Test
     @DisplayName("Конструктор успешно создает книгу с валидными данными и триммит строки")
     void shouldCreateBookWithValidDataAndTrimStrings() {
@@ -226,11 +234,9 @@ class BookTest {
     }
 
     @Test
-    @DisplayName("update изменяет данные книги, не трогая статус, читателя и createdAt")
+    @DisplayName("update изменяет данные книги, не трогая статус, читателя и createdAt, и обновляет updatedAt")
     void shouldUpdateBookDataPreservingStatusAndBorrower() {
-        Book book = new Book("Чистый код", "Роберт Мартин", "9785446109609", List.of("IT"));
-        LocalDateTime initialCreatedAt = book.getCreatedAt();
-        LocalDateTime initialUpdatedAt = book.getUpdatedAt();
+        Book book = bookWithPastTimestamps(BookStatus.BORROWED, "Иван Иванов");
 
         book.update("Новый код", "Новый Мартин", "9785446100000", List.of("Архитектура"));
 
@@ -238,10 +244,10 @@ class BookTest {
         assertEquals("Новый Мартин", book.getAuthor());
         assertEquals("9785446100000", book.getIsbn());
         assertEquals(List.of("Архитектура"), book.getGenres());
-        assertEquals(BookStatus.AVAILABLE, book.getStatus());
-        assertNull(book.getBorrowerName());
-        assertEquals(initialCreatedAt, book.getCreatedAt());
-        assertFalse(book.getUpdatedAt().isBefore(initialUpdatedAt), "updatedAt не может быть раньше прежнего");
+        assertEquals(BookStatus.BORROWED, book.getStatus());
+        assertEquals("Иван Иванов", book.getBorrowerName());
+        assertEquals(PAST_CREATED_AT, book.getCreatedAt());
+        assertTrue(book.getUpdatedAt().isAfter(PAST_UPDATED_AT), "update должен обновить updatedAt");
     }
 
     @Test
@@ -264,13 +270,13 @@ class BookTest {
     @Test
     @DisplayName("addGenre добавляет жанр с обрезкой пробелов и обновляет updatedAt")
     void shouldAddGenreWithTrimAndMarkAsUpdated() {
-        Book book = new Book("Чистый код", "Роберт Мартин", "9785446109609", List.of("IT"));
-        LocalDateTime initialUpdatedAt = book.getUpdatedAt();
+        Book book = bookWithPastTimestamps(BookStatus.AVAILABLE, null);
 
         book.addGenre("  Архитектура  ");
 
         assertEquals(List.of("IT", "Архитектура"), book.getGenres());
-        assertFalse(book.getUpdatedAt().isBefore(initialUpdatedAt));
+        assertTrue(book.getUpdatedAt().isAfter(PAST_UPDATED_AT), "addGenre должен обновить updatedAt");
+        assertEquals(PAST_CREATED_AT, book.getCreatedAt());
     }
 
     @ParameterizedTest
@@ -306,15 +312,16 @@ class BookTest {
     }
 
     @Test
-    @DisplayName("borrow переводит книгу из AVAILABLE в BORROWED и триммит имя читателя")
+    @DisplayName("borrow переводит книгу из AVAILABLE в BORROWED, триммит имя читателя и обновляет updatedAt")
     void shouldBorrowAvailableBookSuccessfully() {
-        Book book = new Book("Чистый код", "Роберт Мартин", "9785446109609", List.of("IT"));
+        Book book = bookWithPastTimestamps(BookStatus.AVAILABLE, null);
 
         book.borrow("  Алексей Смирнов  ");
 
         assertEquals(BookStatus.BORROWED, book.getStatus());
         assertEquals("Алексей Смирнов", book.getBorrowerName());
         assertFalse(book.isAvailable());
+        assertTrue(book.getUpdatedAt().isAfter(PAST_UPDATED_AT), "borrow должен обновить updatedAt");
     }
 
     @Test
@@ -347,16 +354,16 @@ class BookTest {
     }
 
     @Test
-    @DisplayName("giveBack переводит BORROWED в AVAILABLE и сбрасывает читателя в null")
+    @DisplayName("giveBack переводит BORROWED в AVAILABLE, сбрасывает читателя в null и обновляет updatedAt")
     void shouldReturnBorrowedBookSuccessfully() {
-        Book book = new Book("Чистый код", "Роберт Мартин", "9785446109609", List.of("IT"));
-        book.borrow("Алексей Смирнов");
+        Book book = bookWithPastTimestamps(BookStatus.BORROWED, "Алексей Смирнов");
 
         book.giveBack();
 
         assertEquals(BookStatus.AVAILABLE, book.getStatus());
         assertNull(book.getBorrowerName());
         assertTrue(book.isAvailable());
+        assertTrue(book.getUpdatedAt().isAfter(PAST_UPDATED_AT), "giveBack должен обновить updatedAt");
     }
 
     @Test
@@ -395,5 +402,29 @@ class BookTest {
         assertNotEquals(book1, bookWithDifferentId);
         assertNotEquals(null, book1);
         assertNotEquals("Строка", book1);
+    }
+
+    @Test
+    @DisplayName("Неудачные операции не меняют updatedAt")
+    void shouldNotTouchUpdatedAtWhenOperationsFail() {
+        Book book = bookWithPastTimestamps(BookStatus.AVAILABLE, null);
+
+        assertThrows(ValidationException.class, () -> book.addGenre("   "));
+        assertThrows(BusinessRuleException.class, () -> book.borrow("   "));
+        assertThrows(BusinessRuleException.class, book::giveBack);
+        assertThrows(ValidationException.class, () -> book.update("", "Автор", "9785446109609", List.of("IT")));
+
+        assertEquals(PAST_UPDATED_AT, book.getUpdatedAt());
+    }
+
+    @Test
+    @DisplayName("update не стирает жанры, если ему передан getGenres() этой же книги (живое представление)")
+    void shouldKeepGenresWhenUpdatedWithOwnGenresView() {
+        Book book = new Book("Чистый код", "Роберт Мартин", "9785446109609", List.of("IT", "Архитектура"));
+
+        book.update("Новый код", "Роберт Мартин", "9785446109609", book.getGenres());
+
+        assertEquals(List.of("IT", "Архитектура"), book.getGenres());
+        assertEquals("Новый код", book.getTitle());
     }
 }

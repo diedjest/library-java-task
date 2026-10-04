@@ -7,9 +7,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DisplayName("Тестирование базовой сущности AbstractEntity")
@@ -68,7 +67,7 @@ class AbstractEntityTest {
     }
 
     @Test
-    @DisplayName("markAsUpdated меняет updatedAt и не затрагивает id и createdAt")
+    @DisplayName("markAsUpdated обновляет updatedAt и не затрагивает id и createdAt")
     void shouldUpdateOnlyUpdatedAtWhenMarkAsUpdatedCalled() {
         UUID id = UUID.randomUUID();
         LocalDateTime past = LocalDateTime.now().minusHours(1);
@@ -78,8 +77,7 @@ class AbstractEntityTest {
 
         assertEquals(id, entity.getId());
         assertEquals(past, entity.getCreatedAt());
-        assertNotNull(entity.getUpdatedAt());
-        assertFalse(entity.getUpdatedAt().isBefore(past), "updatedAt не может быть раньше прежнего значения");
+        assertTrue(entity.getUpdatedAt().isAfter(past), "markAsUpdated должен сдвинуть updatedAt вперёд");
     }
 
     @Test

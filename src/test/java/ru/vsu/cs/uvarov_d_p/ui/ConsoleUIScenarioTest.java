@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Сквозное тестирование пользовательских сценариев ConsoleUi")
@@ -83,6 +84,8 @@ class ConsoleUIScenarioTest {
     private void assertNoStackTrace(String output) {
         assertFalse(output.contains("Exception"), "Вывод не должен содержать необработанных исключений");
         assertFalse(output.contains("\tat "), "Вывод не должен содержать stack trace");
+        assertFalse(output.contains("✗ Непредвиденная ошибка"),
+                "Ожидаемые ошибки должны выводиться как «✗ Ошибка: ...», а не как непредвиденные");
     }
 
     private int countOccurrences(String text, String target) {
@@ -181,8 +184,8 @@ class ConsoleUIScenarioTest {
 
         assertEquals(1, countOccurrences(outputSuccess, "Введите автора: "));
         assertEquals(1, countOccurrences(outputSuccess, "Введите название: "));
-        assertTrue(outputSuccess.contains("Некорректный формат ISBN"));
-        assertTrue(outputSuccess.contains("уже есть в каталоге"));
+        assertTrue(outputSuccess.contains("✗ Ошибка: Некорректный формат ISBN"));
+        assertTrue(outputSuccess.contains("✗ Ошибка: Книга с ISBN 9785446109609 уже есть в каталоге"));
         assertTrue(outputSuccess.contains("✓ Книга добавлена: Мартин Фаулер — «Рефакторинг»"));
         assertNoStackTrace(outputSuccess);
 
@@ -249,7 +252,10 @@ class ConsoleUIScenarioTest {
 
         String outputNoChange = run(service, "3", "1", "", "", "", "", "0");
         assertTrue(outputNoChange.contains("✓ Книга обновлена"));
-        assertEquals("Java. Эффективное программирование", service.getAllBooks().get(0).getTitle());
+        Book unchanged = service.getAllBooks().get(0);
+        assertEquals("Java. Эффективное программирование", unchanged.getTitle());
+        assertEquals("9785699661084", unchanged.getIsbn());
+        assertEquals(List.of("Java"), unchanged.getGenres(), "Enter на жанрах должен сохранить прежние жанры");
         assertNoStackTrace(outputNoChange);
 
         String outputChangeTitle = run(service, "3", "1", "", "Java 21. Новые горизонты", "", "", "0");
@@ -268,7 +274,7 @@ class ConsoleUIScenarioTest {
                 "0"
         );
 
-        assertTrue(outputIsbnCheck.contains("уже есть в каталоге"));
+        assertTrue(outputIsbnCheck.contains("✗ Ошибка: Книга с ISBN 9785446109609 уже есть в каталоге"));
         assertTrue(outputIsbnCheck.contains("✓ Книга обновлена"));
         assertNoStackTrace(outputIsbnCheck);
     }
@@ -284,7 +290,7 @@ class ConsoleUIScenarioTest {
         assertNoStackTrace(outputCancel);
 
         String outputBorrowed = run(service, "4", "3", "да", "0");
-        assertTrue(outputBorrowed.contains("Нельзя удалить выданную книгу"));
+        assertTrue(outputBorrowed.contains("✗ Ошибка: Нельзя удалить выданную книгу"));
         assertEquals(4, service.getAllBooks().size());
         assertNoStackTrace(outputBorrowed);
 
@@ -320,7 +326,7 @@ class ConsoleUIScenarioTest {
         );
 
         assertTrue(outputIsbn.contains("Чистый код"));
-        assertTrue(outputIsbn.contains("Некорректный формат ISBN"));
+        assertTrue(outputIsbn.contains("✗ Ошибка: Некорректный формат ISBN"));
         assertTrue(outputIsbn.contains("Ничего не найдено."));
         assertNoStackTrace(outputIsbn);
     }
@@ -339,14 +345,14 @@ class ConsoleUIScenarioTest {
         );
 
         assertTrue(output.contains("✓ Жанр добавлен. Текущие жанры: Java, JVM"));
-        assertTrue(output.contains("Жанр 'jvm' уже добавлен к книге"));
+        assertTrue(output.contains("✗ Ошибка: Жанр 'jvm' уже добавлен к книге"));
         assertTrue(output.contains("✓ Жанр добавлен. Текущие жанры: Java, JVM, Архитектура"));
         assertTrue(output.contains("⚠ Достигнут лимит жанров для этой книги."));
         assertNoStackTrace(output);
     }
 
     @Test
-    @DisplayName("Сценарий 11: выдача (пункт 8) и возврат книги (пункт 9) с фильтрацией и подтверждением")
+    @DisplayName("Сценарий 11: выдача (пункт 8) и возврат книги (пункт 9) с подтверждением и проверкой итогового состояния")
     void scenario11_borrowAndReturn() {
         LibraryService service = createServiceWithDemoData();
 
@@ -362,6 +368,32 @@ class ConsoleUIScenarioTest {
         assertTrue(output.contains("Возврат отменён"));
         assertTrue(output.contains("✓ Книга возвращена в каталог"));
         assertNoStackTrace(output);
+
+        Book bloch = service.getAllBooks().get(0);
+        assertTrue(bloch.getAuthor().contains("Блох"));
+        assertTrue(bloch.isAvailable(), "После возврата книга Блоха должна быть в наличии");
+        assertNull(bloch.getBorrowerName());
+        assertFalse(service.getAllBooks().get(2).isAvailable(), "Книга Макконнелла должна остаться выданной");
+    }
+
+    @Test
+    @DisplayName("Сценарий 11б: список выдачи содержит только книги в наличии, список возврата — только выданные")
+    void scenario11b_borrowAndReturnListsAreFiltered() {
+        LibraryService service = createServiceWithDemoData();
+
+        String borrowOutput = run(service, "8", "99", "0");
+
+        assertTrue(borrowOutput.contains("⚠ Номер книги вне допустимого диапазона (1-3)"),
+                "В списке выдачи должны быть только 3 книги в наличии");
+        assertTrue(borrowOutput.contains("Чистый код"));
+        assertFalse(borrowOutput.contains("Совершенный код"), "Выданная книга не должна предлагаться к выдаче");
+
+        String returnOutput = run(service, "9", "99", "0");
+
+        assertTrue(returnOutput.contains("⚠ Номер книги вне допустимого диапазона (1-1)"),
+                "В списке возврата должна быть только 1 выданная книга");
+        assertTrue(returnOutput.contains("Совершенный код"));
+        assertFalse(returnOutput.contains("Чистый код"), "Книга в наличии не должна предлагаться к возврату");
     }
 
     @Test
