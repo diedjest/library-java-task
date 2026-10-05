@@ -159,7 +159,7 @@ class ConsoleUIScenarioTest {
                 "0"
         );
 
-        assertTrue(output.contains("✓ Книга добавлена: Кент Бек — «Экстремальное программирование»"));
+        assertTrue(output.contains("Книга добавлена: Кент Бек — «Экстремальное программирование»"));
         assertTrue(output.contains("Экстремальное программирование"));
         assertTrue(output.contains("Кент Бек"));
         assertNoStackTrace(output);
@@ -184,9 +184,9 @@ class ConsoleUIScenarioTest {
 
         assertEquals(1, countOccurrences(outputSuccess, "Введите автора: "));
         assertEquals(1, countOccurrences(outputSuccess, "Введите название: "));
-        assertTrue(outputSuccess.contains("✗ Ошибка: Некорректный формат ISBN"));
-        assertTrue(outputSuccess.contains("✗ Ошибка: Книга с ISBN 9785446109609 уже есть в каталоге"));
-        assertTrue(outputSuccess.contains("✓ Книга добавлена: Мартин Фаулер — «Рефакторинг»"));
+        assertTrue(outputSuccess.contains("Ошибка: Некорректный формат ISBN"));
+        assertTrue(outputSuccess.contains("Ошибка: Книга с ISBN 9785446109609 уже есть в каталоге"));
+        assertTrue(outputSuccess.contains("Книга добавлена: Мартин Фаулер — «Рефакторинг»"));
         assertNoStackTrace(outputSuccess);
 
         String outputCancel = run(service,
@@ -224,8 +224,8 @@ class ConsoleUIScenarioTest {
                 "0"
         );
 
-        assertTrue(outputRetry.contains("✗ Ошибка: Жанры не должны повторяться: it"));
-        assertTrue(outputRetry.contains("✓ Книга добавлена: Автор Тест — «Название Тест»"));
+        assertTrue(outputRetry.contains("Ошибка: Жанры не должны повторяться: it"));
+        assertTrue(outputRetry.contains("Книга добавлена: Автор Тест — «Название Тест»"));
         assertNoStackTrace(outputRetry);
 
         String outputDecline = run(service,
@@ -240,7 +240,7 @@ class ConsoleUIScenarioTest {
                 "0"
         );
 
-        assertTrue(outputDecline.contains("✗ Ошибка: Жанры не должны повторяться: it"));
+        assertTrue(outputDecline.contains("Ошибка: Жанры не должны повторяться: it"));
         assertTrue(outputDecline.contains("Добавление отменено"));
         assertNoStackTrace(outputDecline);
     }
@@ -251,7 +251,7 @@ class ConsoleUIScenarioTest {
         LibraryService service = createServiceWithDemoData();
 
         String outputNoChange = run(service, "3", "1", "", "", "", "", "0");
-        assertTrue(outputNoChange.contains("✓ Книга обновлена"));
+        assertTrue(outputNoChange.contains("Книга обновлена"));
         Book unchanged = service.getAllBooks().get(0);
         assertEquals("Java. Эффективное программирование", unchanged.getTitle());
         assertEquals("9785699661084", unchanged.getIsbn());
@@ -259,7 +259,7 @@ class ConsoleUIScenarioTest {
         assertNoStackTrace(outputNoChange);
 
         String outputChangeTitle = run(service, "3", "1", "", "Java 21. Новые горизонты", "", "", "0");
-        assertTrue(outputChangeTitle.contains("✓ Книга обновлена"));
+        assertTrue(outputChangeTitle.contains("Книга обновлена"));
         assertEquals("Java 21. Новые горизонты", service.getAllBooks().get(0).getTitle());
         assertNoStackTrace(outputChangeTitle);
 
@@ -274,8 +274,8 @@ class ConsoleUIScenarioTest {
                 "0"
         );
 
-        assertTrue(outputIsbnCheck.contains("✗ Ошибка: Книга с ISBN 9785446109609 уже есть в каталоге"));
-        assertTrue(outputIsbnCheck.contains("✓ Книга обновлена"));
+        assertTrue(outputIsbnCheck.contains("Ошибка: Книга с ISBN 9785446109609 уже есть в каталоге"));
+        assertTrue(outputIsbnCheck.contains("Книга обновлена"));
         assertNoStackTrace(outputIsbnCheck);
     }
 
@@ -290,12 +290,12 @@ class ConsoleUIScenarioTest {
         assertNoStackTrace(outputCancel);
 
         String outputBorrowed = run(service, "4", "3", "да", "0");
-        assertTrue(outputBorrowed.contains("✗ Ошибка: Нельзя удалить выданную книгу"));
+        assertTrue(outputBorrowed.contains("Ошибка: Нельзя удалить выданную книгу"));
         assertEquals(4, service.getAllBooks().size());
         assertNoStackTrace(outputBorrowed);
 
         String outputSuccess = run(service, "4", "1", "да", "0");
-        assertTrue(outputSuccess.contains("✓ Книга удалена"));
+        assertTrue(outputSuccess.contains("Книга удалена"));
         assertEquals(3, service.getAllBooks().size());
         assertFalse(service.getAllBooks().stream().anyMatch(b -> b.getAuthor().contains("Блох")));
         assertNoStackTrace(outputSuccess);
@@ -344,10 +344,10 @@ class ConsoleUIScenarioTest {
                 "0"
         );
 
-        assertTrue(output.contains("✓ Жанр добавлен. Текущие жанры: Java, JVM"));
-        assertTrue(output.contains("✗ Ошибка: Жанр 'jvm' уже добавлен к книге"));
-        assertTrue(output.contains("✓ Жанр добавлен. Текущие жанры: Java, JVM, Архитектура"));
-        assertTrue(output.contains("⚠ Достигнут лимит жанров для этой книги."));
+        assertTrue(output.contains("Жанр добавлен. Текущие жанры: Java, JVM"));
+        assertTrue(output.contains("Ошибка: Жанр 'jvm' уже добавлен к книге"));
+        assertTrue(output.contains("Жанр добавлен. Текущие жанры: Java, JVM, Архитектура"));
+        assertTrue(output.contains("Достигнут лимит жанров для этой книги."));
         assertNoStackTrace(output);
     }
 
@@ -363,10 +363,10 @@ class ConsoleUIScenarioTest {
                 "0"
         );
 
-        assertTrue(output.contains("⚠ Значение не может быть пустым. Попробуйте снова."));
-        assertTrue(output.contains("✓ Книга выдана: Джошуа Блох — «Java. Эффективное программирование» читателю Иван Иванов"));
+        assertTrue(output.contains("Значение не может быть пустым. Попробуйте снова."));
+        assertTrue(output.contains("Книга выдана: Джошуа Блох — «Java. Эффективное программирование» читателю Иван Иванов"));
         assertTrue(output.contains("Возврат отменён"));
-        assertTrue(output.contains("✓ Книга возвращена в каталог"));
+        assertTrue(output.contains("Книга возвращена в каталог"));
         assertNoStackTrace(output);
 
         Book bloch = service.getAllBooks().get(0);
@@ -383,14 +383,14 @@ class ConsoleUIScenarioTest {
 
         String borrowOutput = run(service, "8", "99", "0");
 
-        assertTrue(borrowOutput.contains("⚠ Номер книги вне допустимого диапазона (1-3)"),
+        assertTrue(borrowOutput.contains("Номер книги вне допустимого диапазона (1-3)"),
                 "В списке выдачи должны быть только 3 книги в наличии");
         assertTrue(borrowOutput.contains("Чистый код"));
         assertFalse(borrowOutput.contains("Совершенный код"), "Выданная книга не должна предлагаться к выдаче");
 
         String returnOutput = run(service, "9", "99", "0");
 
-        assertTrue(returnOutput.contains("⚠ Номер книги вне допустимого диапазона (1-1)"),
+        assertTrue(returnOutput.contains("Номер книги вне допустимого диапазона (1-1)"),
                 "В списке возврата должна быть только 1 выданная книга");
         assertTrue(returnOutput.contains("Совершенный код"));
         assertFalse(returnOutput.contains("Чистый код"), "Книга в наличии не должна предлагаться к возврату");
@@ -421,9 +421,9 @@ class ConsoleUIScenarioTest {
                 "0"
         );
 
-        assertTrue(output.contains("⚠ Введено некорректное число"));
-        assertTrue(output.contains("⚠ Номер книги вне допустимого диапазона (1-4)"));
-        assertTrue(output.contains("До свидания!"));
+        assertTrue(output.contains("Введено некорректное число"));
+        assertTrue(output.contains("Номер книги вне допустимого диапазона (1-4)"));
+        assertTrue(output.contains("Выход..."));
         assertNoStackTrace(output);
     }
 
@@ -434,7 +434,7 @@ class ConsoleUIScenarioTest {
 
         String output = run(service, "2", "Роберт Мартин");
 
-        assertTrue(output.contains("Ввод завершён. До свидания!"));
+        assertTrue(output.contains("Ввод завершён. Выход..."));
         assertNoStackTrace(output);
     }
 
@@ -454,8 +454,8 @@ class ConsoleUIScenarioTest {
 
         String output = run(proxyService, "1", "0");
 
-        assertTrue(output.contains("✗ Непредвиденная ошибка: RuntimeException"));
-        assertTrue(output.contains("До свидания!"));
+        assertTrue(output.contains("Непредвиденная ошибка: RuntimeException"));
+        assertTrue(output.contains("Выход..."));
         assertFalse(output.contains("\tat "));
     }
 }

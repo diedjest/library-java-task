@@ -32,7 +32,6 @@ class AbstractEntityTest {
     @Test
     @DisplayName("Конструктор с одним параметром выбрасывает NullPointerException при null id")
     void shouldThrowNullPointerExceptionWhenIdIsNull() {
-        // Arrange, Act & Assert
         NullPointerException ex = assertThrows(
                 NullPointerException.class,
                 () -> new TestEntity(null)

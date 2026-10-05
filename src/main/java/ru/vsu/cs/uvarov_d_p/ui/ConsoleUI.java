@@ -48,28 +48,28 @@ public class ConsoleUI {
                 printMenu();
                 String choice = helper.readLine("Выберите пункт меню: ").trim();
                 if ("0".equals(choice)) {
-                    System.out.println("До свидания!");
+                    System.out.println("Выход...");
                     break;
                 }
 
                 Command command = commands.get(choice);
                 if (command == null) {
-                    System.out.println("⚠ Неверный пункт меню");
+                    System.out.println("Неверный пункт меню");
                     continue;
                 }
 
                 try {
                     command.execute();
                 } catch (AppException e) {
-                    System.out.println("✗ Ошибка: " + describe(e));
+                    System.out.println("Ошибка: " + describe(e));
                 } catch (InputClosedException e) {
                     throw e;
                 } catch (RuntimeException e) {
-                    System.out.println("✗ Непредвиденная ошибка: " + describe(e));
+                    System.out.println("Непредвиденная ошибка: " + describe(e));
                 }
             }
         } catch (InputClosedException e) {
-            System.out.println("\nВвод завершён. До свидания!");
+            System.out.println("\nВвод завершён. Выход...");
         }
     }
 

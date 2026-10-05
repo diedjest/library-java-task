@@ -76,7 +76,7 @@ class ConsoleHelperTest {
         String result = helper.readNonBlank("Введите текст: ");
 
         assertEquals("Успешный ввод", result);
-        assertTrue(getCapturedOutput().contains("⚠ Значение не может быть пустым. Попробуйте снова."));
+        assertTrue(getCapturedOutput().contains("Значение не может быть пустым. Попробуйте снова."));
     }
 
     @ParameterizedTest
@@ -147,7 +147,7 @@ class ConsoleHelperTest {
         List<String> genres = helper.readGenres();
 
         assertEquals(List.of("Фантастика"), genres);
-        assertTrue(getCapturedOutput().contains("⚠ Значение не может быть пустым. Попробуйте снова."));
+        assertTrue(getCapturedOutput().contains("Значение не может быть пустым. Попробуйте снова."));
     }
 
     @Test
@@ -172,7 +172,7 @@ class ConsoleHelperTest {
         UUID selectedId = helper.selectBookId(List.of(b1), "Выберите: ");
 
         assertNull(selectedId);
-        assertTrue(getCapturedOutput().contains("⚠ Введено некорректное число"));
+        assertTrue(getCapturedOutput().contains("Введено некорректное число"));
     }
 
     @ParameterizedTest

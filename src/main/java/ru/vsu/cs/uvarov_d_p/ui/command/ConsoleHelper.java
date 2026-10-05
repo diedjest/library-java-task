@@ -72,12 +72,12 @@ public class ConsoleHelper {
         try {
             int index = Integer.parseInt(input);
             if (index < 1 || index > books.size()) {
-                System.out.println("⚠ Номер книги вне допустимого диапазона (1-" + books.size() + ")");
+                System.out.println("Номер книги вне допустимого диапазона (1-" + books.size() + ")");
                 return null;
             }
             return books.get(index - 1).getId();
         } catch (NumberFormatException e) {
-            System.out.println("⚠ Введено некорректное число");
+            System.out.println("Введено некорректное число");
             return null;
         }
     }
@@ -123,7 +123,7 @@ public class ConsoleHelper {
             if (!line.isBlank()) {
                 return line.trim();
             }
-            System.out.println("⚠ Значение не может быть пустым. Попробуйте снова.");
+            System.out.println("Значение не может быть пустым. Попробуйте снова.");
         }
     }
 

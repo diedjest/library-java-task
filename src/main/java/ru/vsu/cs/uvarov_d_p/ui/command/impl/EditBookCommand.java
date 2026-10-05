@@ -59,7 +59,7 @@ public class EditBookCommand implements Command {
 
             try {
                 service.editBook(bookId, title, author, isbn, genres);
-                System.out.println("✓ Книга обновлена");
+                System.out.println("Книга обновлена");
                 System.out.println();
                 return;
             } catch (AppException e) {

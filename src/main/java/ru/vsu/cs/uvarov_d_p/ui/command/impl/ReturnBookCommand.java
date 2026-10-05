@@ -41,7 +41,7 @@ public class ReturnBookCommand implements Command {
         Book book = service.getBookById(bookId);
         if (helper.confirm("Принять «" + book.getTitle() + "» от читателя " + book.getBorrowerName() + "? (да/нет): ")) {
             service.returnBook(bookId);
-            System.out.println("✓ Книга возвращена в каталог");
+            System.out.println("Книга возвращена в каталог");
         } else {
             System.out.println("Возврат отменён");
         }

@@ -38,7 +38,7 @@ public class DeleteBookCommand implements Command {
         Book book = service.getBookById(bookId);
         if (helper.confirm("Удалить «" + book.getTitle() + "»? (да/нет): ")) {
             service.deleteBook(bookId);
-            System.out.println("✓ Книга удалена");
+            System.out.println("Книга удалена");
         } else {
             System.out.println("Удаление отменено");
         }

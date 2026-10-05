@@ -41,14 +41,14 @@ public class AddGenreCommand implements Command {
                 + String.join(", ", book.getGenres()));
 
         if (book.getGenres().size() >= BookConstraints.MAX_GENRES) {
-            System.out.println("⚠ Достигнут лимит жанров для этой книги.");
+            System.out.println("Достигнут лимит жанров для этой книги.");
             System.out.println();
             return;
         }
 
         String newGenre = helper.readNonBlank("Введите новый жанр: ");
         Book updated = service.addGenre(bookId, newGenre);
-        System.out.println("✓ Жанр добавлен. Текущие жанры: " + String.join(", ", updated.getGenres()));
+        System.out.println("Жанр добавлен. Текущие жанры: " + String.join(", ", updated.getGenres()));
         System.out.println();
     }
 }

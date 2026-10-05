@@ -53,7 +53,7 @@ public class AddBookCommand implements Command {
 
             try {
                 Book book = service.addBook(title, author, isbn, genres);
-                System.out.println("✓ Книга добавлена: " + book.getAuthor() + " — «" + book.getTitle() + "»");
+                System.out.println("Книга добавлена: " + book.getAuthor() + " — «" + book.getTitle() + "»");
                 System.out.println();
                 return;
             } catch (AppException e) {

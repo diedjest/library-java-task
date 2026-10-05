@@ -40,7 +40,7 @@ public class BorrowBookCommand implements Command {
 
         String borrowerName = helper.readNonBlank("Кому выдать (имя читателя): ");
         Book book = service.borrowBook(bookId, borrowerName);
-        System.out.println("✓ Книга выдана: " + book.getAuthor() + " — «" + book.getTitle() + "» читателю " + book.getBorrowerName());
+        System.out.println("Книга выдана: " + book.getAuthor() + " — «" + book.getTitle() + "» читателю " + book.getBorrowerName());
         System.out.println();
     }
 }
