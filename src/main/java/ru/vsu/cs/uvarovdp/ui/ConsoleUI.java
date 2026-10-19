@@ -30,6 +30,7 @@ public class ConsoleUI {
     private static final String BORROW_BOOK = "borrow";
     private static final String RETURN_BOOK = "return";
     private static final String EXIT = "exit";
+    private static final String EMPTY_DESCRIPTION = "";
 
     private final ConsoleHelper helper;
     private final Map<String, Command> commands;
@@ -91,7 +92,7 @@ public class ConsoleUI {
 
     private static String describe(Throwable e) {
         if (e == null) {
-            return "";
+            return EMPTY_DESCRIPTION;
         }
         String message = e.getMessage();
         if (message != null && !message.isBlank()) {
