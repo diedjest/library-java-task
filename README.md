@@ -17,6 +17,7 @@
 | Пакет | Назначение |
 |---|---|
 | `entity` | `Book`, `BookStatus`, базовая `AbstractEntity` |
+| `dto` | `BookData` — данные книги для сервиса |
 | `validator` | проверка данных книги |
 | `repository` | интерфейсы и `InMemoryBookRepository` |
 | `service` | бизнес-логика (`LibraryService`) |
