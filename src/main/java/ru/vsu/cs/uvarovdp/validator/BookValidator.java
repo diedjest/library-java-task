@@ -1,6 +1,7 @@
 package ru.vsu.cs.uvarovdp.validator;
 
 import ru.vsu.cs.uvarovdp.domain.BookConstraints;
+import ru.vsu.cs.uvarovdp.entity.BookStatus;
 import ru.vsu.cs.uvarovdp.ex.ValidationException;
 import ru.vsu.cs.uvarovdp.util.StringUtils;
 
@@ -22,6 +23,19 @@ public final class BookValidator {
         validateRequiredFields(title, author, isbn, genres);
         List<String> trimmedGenres = normalizeGenres(genres);
         return new ValidatedData(title.trim(), author.trim(), isbn.trim(), trimmedGenres);
+    }
+
+    public static String validateBorrower(BookStatus status, String borrowerName) {
+        if (status == BookStatus.AVAILABLE) {
+            if (!StringUtils.isNullOrBlank(borrowerName)) {
+                throw new ValidationException("У книги в наличии не должно быть читателя");
+            }
+            return null;
+        }
+        if (StringUtils.isNullOrBlank(borrowerName)) {
+            throw new ValidationException("Для выданной книги должно быть указано имя читателя");
+        }
+        return borrowerName.trim();
     }
 
     public static String genreKey(String genre) {
