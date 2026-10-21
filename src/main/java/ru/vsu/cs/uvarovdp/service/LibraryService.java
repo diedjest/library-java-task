@@ -1,5 +1,6 @@
 package ru.vsu.cs.uvarovdp.service;
 
+import ru.vsu.cs.uvarovdp.dto.BookData;
 import ru.vsu.cs.uvarovdp.entity.Book;
 import ru.vsu.cs.uvarovdp.ex.BusinessRuleException;
 import ru.vsu.cs.uvarovdp.ex.NotFoundException;
@@ -14,30 +15,24 @@ public interface LibraryService {
     /**
      * Регистрирует новую книгу в каталоге библиотеки.
      *
-     * @param title  название книги
-     * @param author автор книги
-     * @param isbn   международный стандартный книжный номер
-     * @param genres список жанров книги
+     * @param data название, автор, ISBN и жанры книги
      * @return сохранённая книга
      * @throws ValidationException   если переданные данные некорректны (пустые поля, неверный формат ISBN, неверное число жанров)
      * @throws BusinessRuleException если книга с указанным ISBN уже существует в каталоге
      */
-    Book addBook(String title, String author, String isbn, List<String> genres);
+    Book addBook(BookData data);
 
     /**
      * Редактирует основные сведения о существующей книге.
      *
      * @param bookId идентификатор книги
-     * @param title  новое название
-     * @param author новый автор
-     * @param isbn   новый ISBN
-     * @param genres новый список жанров
+     * @param data   новые название, автор, ISBN и жанры
      * @return обновлённая книга
      * @throws NotFoundException     если книга с указанным ID не найдена
      * @throws ValidationException   если переданные данные некорректны
      * @throws BusinessRuleException если указанный ISBN уже занят другой книгой
      */
-    Book editBook(UUID bookId, String title, String author, String isbn, List<String> genres);
+    Book editBook(UUID bookId, BookData data);
 
     /**
      * Удаляет книгу из каталога по идентификатору.
