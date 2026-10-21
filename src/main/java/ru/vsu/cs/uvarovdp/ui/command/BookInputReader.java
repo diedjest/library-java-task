@@ -12,57 +12,62 @@ import java.util.UUID;
 public class BookInputReader {
 
     private final LibraryService service;
-    private final ConsoleHelper helper;
+    private final ConsoleInput consoleInput;
 
-    public BookInputReader(LibraryService service, ConsoleHelper helper) {
+    public BookInputReader(LibraryService service, ConsoleInput input) {
         this.service = Objects.requireNonNull(service, "Сервис не может быть null");
-        this.helper = Objects.requireNonNull(helper, "ConsoleHelper не может быть null");
+        this.consoleInput = Objects.requireNonNull(input, "ConsoleInput не может быть null");
     }
 
     public String readIsbnForAdd(String defaultIsbn) {
-        while (true) {
-            String input;
-            if (defaultIsbn == null) {
-                input = helper.readLine("Введите ISBN (Enter — отмена): ").trim();
-                if (input.isEmpty()) {
-                    return null;
-                }
-            } else {
-                input = helper.readWithDefault("Введите ISBN [" + defaultIsbn + "]: ", defaultIsbn);
-            }
-
-            try {
-                service.checkIsbnAvailable(input, null);
-                return input;
-            } catch (AppException e) {
-                System.out.println("✗ Ошибка: " + e.getMessage());
-            }
+        String isbn = readIsbnOrCancel(defaultIsbn);
+        while (isbn != null && !isIsbnAvailable(isbn, null)) {
+            isbn = readIsbnOrCancel(defaultIsbn);
         }
+        return isbn;
     }
 
     public String readIsbnForEdit(String defaultIsbn, UUID bookId) {
-        while (true) {
-            String input = helper.readWithDefault("Новый ISBN [" + defaultIsbn + "]: ", defaultIsbn);
-            try {
-                service.checkIsbnAvailable(input, bookId);
-                return input;
-            } catch (AppException e) {
-                System.out.println("✗ Ошибка: " + e.getMessage());
-            }
+        String isbn = readEditedIsbn(defaultIsbn);
+        while (!isIsbnAvailable(isbn, bookId)) {
+            isbn = readEditedIsbn(defaultIsbn);
+        }
+        return isbn;
+    }
+
+    private String readIsbnOrCancel(String defaultIsbn) {
+        if (defaultIsbn != null) {
+            return consoleInput.readWithDefault("Введите ISBN [" + defaultIsbn + "]: ", defaultIsbn);
+        }
+        String isbn = consoleInput.readLine("Введите ISBN (Enter — отмена): ").trim();
+        return isbn.isEmpty() ? null : isbn;
+    }
+
+    private String readEditedIsbn(String defaultIsbn) {
+        return consoleInput.readWithDefault("Новый ISBN [" + defaultIsbn + "]: ", defaultIsbn);
+    }
+
+    private boolean isIsbnAvailable(String isbn, UUID excludeBookId) {
+        try {
+            service.checkIsbnAvailable(isbn, excludeBookId);
+            return true;
+        } catch (AppException e) {
+            System.out.println("✗ Ошибка: " + e.getMessage());
+            return false;
         }
     }
 
     public List<String> readGenres(List<String> defaultGenres) {
         if (defaultGenres != null && !defaultGenres.isEmpty()) {
             System.out.println("Введите новые жанры (Enter для сохранения текущих: " + String.join(", ", defaultGenres) + "):");
-            String first = helper.readLine("Жанр 1: ").trim();
+            String first = consoleInput.readLine("Жанр 1: ").trim();
             if (first.isEmpty()) {
                 return defaultGenres;
             }
             List<String> genres = new ArrayList<>();
             genres.add(first);
             for (int i = 2; i <= BookConstraints.MAX_GENRES; i++) {
-                String next = helper.readLine("Жанр " + i + " (Enter, чтобы завершить): ").trim();
+                String next = consoleInput.readLine("Жанр " + i + " (Enter, чтобы завершить): ").trim();
                 if (next.isEmpty()) {
                     break;
                 }
@@ -70,6 +75,6 @@ public class BookInputReader {
             }
             return genres;
         }
-        return helper.readGenres();
+        return consoleInput.readGenres();
     }
 }

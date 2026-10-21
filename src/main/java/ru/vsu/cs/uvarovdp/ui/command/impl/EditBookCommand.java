@@ -1,11 +1,14 @@
 package ru.vsu.cs.uvarovdp.ui.command.impl;
 
+import ru.vsu.cs.uvarovdp.dto.BookData;
 import ru.vsu.cs.uvarovdp.entity.Book;
 import ru.vsu.cs.uvarovdp.ex.AppException;
 import ru.vsu.cs.uvarovdp.service.LibraryService;
 import ru.vsu.cs.uvarovdp.ui.command.BookInputReader;
+import ru.vsu.cs.uvarovdp.ui.command.BookTablePrinter;
 import ru.vsu.cs.uvarovdp.ui.command.Command;
-import ru.vsu.cs.uvarovdp.ui.command.ConsoleHelper;
+import ru.vsu.cs.uvarovdp.ui.command.ConsoleInput;
+import ru.vsu.cs.uvarovdp.ui.command.ConsoleOutput;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,62 +17,75 @@ import java.util.UUID;
 public class EditBookCommand implements Command {
 
     private final LibraryService service;
-    private final ConsoleHelper helper;
+    private final ConsoleInput input;
+    private final BookTablePrinter printer;
     private final BookInputReader reader;
 
-    public EditBookCommand(LibraryService service, ConsoleHelper helper) {
+    public EditBookCommand(LibraryService service, ConsoleInput input, BookTablePrinter printer) {
         this.service = Objects.requireNonNull(service, "Сервис не может быть null");
-        this.helper = Objects.requireNonNull(helper, "ConsoleHelper не может быть null");
-        this.reader = new BookInputReader(service, helper);
+        this.input = Objects.requireNonNull(input, "ConsoleInput не может быть null");
+        this.printer = Objects.requireNonNull(printer, "BookTablePrinter не может быть null");
+        this.reader = new BookInputReader(service, input);
     }
 
     @Override
     public void execute() {
         List<Book> books = service.getAllBooks();
         if (books.isEmpty()) {
-            System.out.println("Каталог пуст.");
-            System.out.println();
+            ConsoleOutput.printWithGap("Каталог пуст.");
             return;
         }
 
-        helper.printBooks(books, "Каталог пуст.");
-        UUID bookId = helper.selectBookId(books, "Выберите номер книги для редактирования: ");
+        printer.printBooks(books, "Каталог пуст.");
+        UUID bookId = input.selectBookId(books, "Выберите номер книги для редактирования: ");
         if (bookId == null) {
-            System.out.println();
+            ConsoleOutput.printBlankLine();
             return;
         }
 
         Book current = service.getBookById(bookId);
+        printCurrentData(current);
+        editUntilFinished(bookId, current);
+    }
+
+    private void printCurrentData(Book book) {
         System.out.println("Текущие данные книги:");
-        System.out.println("Автор: " + current.getAuthor());
-        System.out.println("Название: " + current.getTitle());
-        System.out.println("ISBN: " + current.getIsbn());
-        System.out.println("Жанры: " + String.join(", ", current.getGenres()));
+        System.out.println("Автор: " + book.getAuthor());
+        System.out.println("Название: " + book.getTitle());
+        System.out.println("ISBN: " + book.getIsbn());
+        System.out.println("Жанры: " + String.join(", ", book.getGenres()));
+    }
 
-        String author = current.getAuthor();
-        String title = current.getTitle();
-        String isbn = current.getIsbn();
-        List<String> genres = current.getGenres();
+    private void editUntilFinished(UUID bookId, Book current) {
+        BookData data = new BookData(current.getTitle(), current.getAuthor(), current.getIsbn(), current.getGenres());
 
-        while (true) {
-            author = helper.readWithDefault("Новый автор [" + author + "]: ", author);
-            title = helper.readWithDefault("Новое название [" + title + "]: ", title);
-            isbn = reader.readIsbnForEdit(isbn, bookId);
-            genres = reader.readGenres(genres);
+        boolean finished = false;
+        while (!finished) {
+            data = readNewData(bookId, data);
+            finished = trySave(bookId, data);
+        }
+    }
 
-            try {
-                service.editBook(bookId, title, author, isbn, genres);
-                System.out.println("Книга обновлена");
-                System.out.println();
-                return;
-            } catch (AppException e) {
-                System.out.println("✗ Ошибка: " + e.getMessage());
-                if (!helper.confirm("Исправить данные и повторить? (да/нет): ")) {
-                    System.out.println("Редактирование отменено");
-                    System.out.println();
-                    return;
-                }
+    private BookData readNewData(UUID bookId, BookData defaults) {
+        String author = input.readWithDefault("Новый автор [" + defaults.author() + "]: ", defaults.author());
+        String title = input.readWithDefault("Новое название [" + defaults.title() + "]: ", defaults.title());
+        String isbn = reader.readIsbnForEdit(defaults.isbn(), bookId);
+        List<String> genres = reader.readGenres(defaults.genres());
+        return new BookData(title, author, isbn, genres);
+    }
+
+    private boolean trySave(UUID bookId, BookData data) {
+        try {
+            service.editBook(bookId, data);
+            ConsoleOutput.printWithGap("Книга обновлена");
+            return true;
+        } catch (AppException e) {
+            System.out.println("✗ Ошибка: " + e.getMessage());
+            if (input.confirm("Исправить данные и повторить? (да/нет): ")) {
+                return false;
             }
+            ConsoleOutput.printWithGap("Редактирование отменено");
+            return true;
         }
     }
 }

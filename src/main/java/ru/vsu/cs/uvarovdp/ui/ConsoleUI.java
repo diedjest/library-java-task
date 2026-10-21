@@ -3,7 +3,9 @@ package ru.vsu.cs.uvarovdp.ui;
 import ru.vsu.cs.uvarovdp.ex.AppException;
 import ru.vsu.cs.uvarovdp.service.LibraryService;
 import ru.vsu.cs.uvarovdp.ui.command.Command;
-import ru.vsu.cs.uvarovdp.ui.command.ConsoleHelper;
+import ru.vsu.cs.uvarovdp.ui.command.BookTablePrinter;
+import ru.vsu.cs.uvarovdp.ui.command.ConsoleInput;
+import ru.vsu.cs.uvarovdp.ui.command.ConsoleOutput;
 import ru.vsu.cs.uvarovdp.ex.InputClosedException;
 import ru.vsu.cs.uvarovdp.ui.command.impl.AddBookCommand;
 import ru.vsu.cs.uvarovdp.ui.command.impl.AddGenreCommand;
@@ -32,34 +34,35 @@ public class ConsoleUI {
     private static final String EXIT = "exit";
     private static final String EMPTY_DESCRIPTION = "";
 
-    private final ConsoleHelper helper;
+    private final ConsoleInput input;
     private final Map<String, Command> commands;
 
     public ConsoleUI(LibraryService service) {
-        this.helper = new ConsoleHelper(new Scanner(System.in));
+        this.input = new ConsoleInput(new Scanner(System.in));
+        BookTablePrinter printer = new BookTablePrinter();
         this.commands = Map.of(
-                SHOW_ALL, new ShowAllCommand(service, helper),
-                ADD_BOOK, new AddBookCommand(service, helper),
-                EDIT_BOOK, new EditBookCommand(service, helper),
-                DELETE_BOOK, new DeleteBookCommand(service, helper),
-                SEARCH_AUTHOR, new SearchByAuthorCommand(service, helper),
-                SEARCH_ISBN, new SearchByIsbnCommand(service, helper),
-                ADD_GENRE, new AddGenreCommand(service, helper),
-                BORROW_BOOK, new BorrowBookCommand(service, helper),
-                RETURN_BOOK, new ReturnBookCommand(service, helper)
+                SHOW_ALL, new ShowAllCommand(service, printer),
+                ADD_BOOK, new AddBookCommand(service, input),
+                EDIT_BOOK, new EditBookCommand(service, input, printer),
+                DELETE_BOOK, new DeleteBookCommand(service, input, printer),
+                SEARCH_AUTHOR, new SearchByAuthorCommand(service, input, printer),
+                SEARCH_ISBN, new SearchByIsbnCommand(service, input, printer),
+                ADD_GENRE, new AddGenreCommand(service, input, printer),
+                BORROW_BOOK, new BorrowBookCommand(service, input, printer),
+                RETURN_BOOK, new ReturnBookCommand(service, input, printer)
         );
     }
 
     public void start() {
-        System.out.println(ConsoleHelper.HEADER);
+        System.out.println(ConsoleOutput.HEADER);
         System.out.println("         КАТАЛОГ ДОМАШНЕЙ БИБЛИОТЕКИ");
-        System.out.println(ConsoleHelper.HEADER);
+        System.out.println(ConsoleOutput.HEADER);
 
         try {
             boolean running = true;
             while (running) {
                 printMenu();
-                String choice = helper.readLine("Выберите пункт меню: ").trim();
+                String choice = input.readLine("Выберите пункт меню: ").trim();
                 if (EXIT.equals(choice)) {
                     System.out.println("Выход...");
                     running = false;
@@ -102,7 +105,7 @@ public class ConsoleUI {
     }
 
     private void printMenu() {
-        System.out.println("\n" + ConsoleHelper.SEPARATOR);
+        System.out.println("\n" + ConsoleOutput.SEPARATOR);
         printMenuItem(SHOW_ALL, "Показать все книги");
         printMenuItem(ADD_BOOK, "Добавить книгу");
         printMenuItem(EDIT_BOOK, "Редактировать книгу");
@@ -113,7 +116,7 @@ public class ConsoleUI {
         printMenuItem(BORROW_BOOK, "Выдать книгу читателю");
         printMenuItem(RETURN_BOOK, "Принять книгу обратно");
         printMenuItem(EXIT, "Выход");
-        System.out.println(ConsoleHelper.SEPARATOR);
+        System.out.println(ConsoleOutput.SEPARATOR);
     }
 
     private static void printMenuItem(String prefix, String title) {
