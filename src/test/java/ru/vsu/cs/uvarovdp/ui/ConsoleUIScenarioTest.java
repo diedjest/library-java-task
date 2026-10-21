@@ -3,6 +3,7 @@ package ru.vsu.cs.uvarovdp.ui;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import ru.vsu.cs.uvarovdp.dto.BookData;
 import ru.vsu.cs.uvarovdp.entity.Book;
 import ru.vsu.cs.uvarovdp.entity.BookStatus;
 import ru.vsu.cs.uvarovdp.ex.BusinessRuleException;
@@ -155,7 +156,7 @@ class ConsoleUIScenarioTest {
     @DisplayName("Сценарий 4: добавление новой книги (пункт add) передает введенные данные в сервис")
     void scenario4_addBookSuccess() {
         LibraryService service = createServiceWithDemoData();
-        when(service.addBook("Экстремальное программирование", "Кент Бек", "978-5-93286-042-7", List.of("Методология")))
+        when(service.addBook(new BookData("Экстремальное программирование", "Кент Бек", "978-5-93286-042-7", List.of("Методология"))))
                 .thenReturn(availableBook("Экстремальное программирование", "Кент Бек", "9785932860427",
                         List.of("Методология")));
 
@@ -170,8 +171,8 @@ class ConsoleUIScenarioTest {
         );
 
         assertTrue(output.contains("Книга добавлена: Кент Бек — «Экстремальное программирование»"));
-        verify(service).addBook("Экстремальное программирование", "Кент Бек", "978-5-93286-042-7",
-                List.of("Методология"));
+        verify(service).addBook(new BookData("Экстремальное программирование", "Кент Бек", "978-5-93286-042-7",
+                List.of("Методология")));
         assertNoStackTrace(output);
     }
 
@@ -184,7 +185,7 @@ class ConsoleUIScenarioTest {
         doThrow(new BusinessRuleException(BusinessRuleType.DUPLICATE_ISBN,
                 "Книга с ISBN 9785446109609 уже есть в каталоге"))
                 .when(service).checkIsbnAvailable("978-5-4461-0960-9", null);
-        when(service.addBook("Рефакторинг", "Мартин Фаулер", "978-5-93286-042-7", List.of("Рефакторинг")))
+        when(service.addBook(new BookData("Рефакторинг", "Мартин Фаулер", "978-5-93286-042-7", List.of("Рефакторинг"))))
                 .thenReturn(availableBook("Рефакторинг", "Мартин Фаулер", "9785932860427", List.of("Рефакторинг")));
 
         String outputSuccess = run(service,
@@ -216,7 +217,7 @@ class ConsoleUIScenarioTest {
         );
 
         assertTrue(outputCancel.contains("Добавление отменено"));
-        verify(cancelService, never()).addBook(any(), any(), any(), any());
+        verify(cancelService, never()).addBook(any());
         assertNoStackTrace(outputCancel);
     }
 
@@ -224,9 +225,9 @@ class ConsoleUIScenarioTest {
     @DisplayName("Сценарий 6: исправление ошибок добавления книги при подтверждении и отмена при отказе")
     void scenario6_addBookGenreRetryAndDecline() {
         LibraryService service = createServiceWithDemoData();
-        when(service.addBook("Название Тест", "Автор Тест", "978-5-93286-042-7", List.of("IT", "it")))
+        when(service.addBook(new BookData("Название Тест", "Автор Тест", "978-5-93286-042-7", List.of("IT", "it"))))
                 .thenThrow(new ValidationException("Жанры не должны повторяться: it"));
-        when(service.addBook("Название Тест", "Автор Тест", "978-5-93286-042-7", List.of("IT")))
+        when(service.addBook(new BookData("Название Тест", "Автор Тест", "978-5-93286-042-7", List.of("IT"))))
                 .thenReturn(availableBook("Название Тест", "Автор Тест", "9785932860427", List.of("IT")));
 
         String outputRetry = run(service,
@@ -251,7 +252,7 @@ class ConsoleUIScenarioTest {
         assertNoStackTrace(outputRetry);
 
         LibraryService declineService = createServiceWithDemoData();
-        when(declineService.addBook("Название Отмена", "Автор Отмена", "978-5-93286-043-4", List.of("IT", "it")))
+        when(declineService.addBook(new BookData("Название Отмена", "Автор Отмена", "978-5-93286-043-4", List.of("IT", "it"))))
                 .thenThrow(new ValidationException("Жанры не должны повторяться: it"));
 
         String outputDecline = run(declineService,
@@ -277,15 +278,15 @@ class ConsoleUIScenarioTest {
         LibraryService noChangeService = createServiceWithDemoData();
         String outputNoChange = run(noChangeService, "edit", "1", "", "", "", "", "exit");
         assertTrue(outputNoChange.contains("Книга обновлена"));
-        verify(noChangeService).editBook(bloch.getId(), "Java. Эффективное программирование", "Джошуа Блох",
-                "9785699661084", List.of("Java"));
+        verify(noChangeService).editBook(bloch.getId(), new BookData("Java. Эффективное программирование", "Джошуа Блох",
+                "9785699661084", List.of("Java")));
         assertNoStackTrace(outputNoChange);
 
         LibraryService titleService = createServiceWithDemoData();
         String outputChangeTitle = run(titleService, "edit", "1", "", "Java 21. Новые горизонты", "", "", "exit");
         assertTrue(outputChangeTitle.contains("Книга обновлена"));
-        verify(titleService).editBook(bloch.getId(), "Java 21. Новые горизонты", "Джошуа Блох",
-                "9785699661084", List.of("Java"));
+        verify(titleService).editBook(bloch.getId(), new BookData("Java 21. Новые горизонты", "Джошуа Блох",
+                "9785699661084", List.of("Java")));
         assertNoStackTrace(outputChangeTitle);
 
         LibraryService isbnService = createServiceWithDemoData();
@@ -305,8 +306,8 @@ class ConsoleUIScenarioTest {
 
         assertTrue(outputIsbnCheck.contains("Ошибка: Книга с ISBN 9785446109609 уже есть в каталоге"));
         assertTrue(outputIsbnCheck.contains("Книга обновлена"));
-        verify(isbnService).editBook(bloch.getId(), "Java. Эффективное программирование", "Джошуа Блох",
-                "978-5-699-66108-4", List.of("Java"));
+        verify(isbnService).editBook(bloch.getId(), new BookData("Java. Эффективное программирование", "Джошуа Блох",
+                "978-5-699-66108-4", List.of("Java")));
         assertNoStackTrace(outputIsbnCheck);
     }
 

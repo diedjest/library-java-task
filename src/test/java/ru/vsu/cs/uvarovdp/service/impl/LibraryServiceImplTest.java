@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import ru.vsu.cs.uvarovdp.dto.BookData;
 import ru.vsu.cs.uvarovdp.entity.Book;
 import ru.vsu.cs.uvarovdp.entity.BookStatus;
 import ru.vsu.cs.uvarovdp.ex.BusinessRuleException;
@@ -96,7 +97,7 @@ class LibraryServiceImplTest {
     void shouldAddBookSuccessfully() {
         stubValidIsbn(RAW_ISBN, ISBN);
 
-        Book book = service.addBook("Чистый код", "Роберт Мартин", RAW_ISBN, List.of("IT"));
+        Book book = service.addBook(new BookData("Чистый код", "Роберт Мартин", RAW_ISBN, List.of("IT")));
 
         ArgumentCaptor<Book> saved = ArgumentCaptor.forClass(Book.class);
         verify(repository).save(saved.capture());
@@ -113,7 +114,7 @@ class LibraryServiceImplTest {
 
         ValidationException ex = assertThrows(
                 ValidationException.class,
-                () -> service.addBook("Название", "Автор", "invalid-isbn", List.of("IT"))
+                () -> service.addBook(new BookData("Название", "Автор", "invalid-isbn", List.of("IT")))
         );
         assertEquals("Некорректный формат ISBN", ex.getMessage());
         verify(repository, never()).save(any());
@@ -128,7 +129,7 @@ class LibraryServiceImplTest {
 
         BusinessRuleException ex = assertThrows(
                 BusinessRuleException.class,
-                () -> service.addBook("Книга 2", "Автор 2", ISBN, List.of("Проза"))
+                () -> service.addBook(new BookData("Книга 2", "Автор 2", ISBN, List.of("Проза")))
         );
         assertEquals("Книга с ISBN 9785446109609 уже есть в каталоге", ex.getMessage());
         verify(repository, never()).save(any());
@@ -141,7 +142,7 @@ class LibraryServiceImplTest {
 
         ValidationException ex = assertThrows(
                 ValidationException.class,
-                () -> service.addBook("   ", "Автор", ISBN, List.of("IT"))
+                () -> service.addBook(new BookData("   ", "Автор", ISBN, List.of("IT")))
         );
         assertEquals("Название книги не может быть пустым", ex.getMessage());
         verify(repository, never()).save(any());
@@ -153,7 +154,7 @@ class LibraryServiceImplTest {
         Book original = storedBook();
         stubValidIsbn(OTHER_ISBN, OTHER_ISBN);
 
-        Book updated = service.editBook(original.getId(), "Новое название", "Новый автор", OTHER_ISBN, List.of("Наука"));
+        Book updated = service.editBook(original.getId(), new BookData("Новое название", "Новый автор", OTHER_ISBN, List.of("Наука")));
 
         assertEquals("Новое название", updated.getTitle());
         assertEquals("Новый автор", updated.getAuthor());
@@ -169,7 +170,7 @@ class LibraryServiceImplTest {
         stubValidIsbn(RAW_ISBN, ISBN);
         when(repository.findByIsbn(ISBN)).thenReturn(Optional.of(original));
 
-        Book updated = service.editBook(original.getId(), "Новое название", "Автор", RAW_ISBN, List.of("IT"));
+        Book updated = service.editBook(original.getId(), new BookData("Новое название", "Автор", RAW_ISBN, List.of("IT")));
 
         assertEquals(ISBN, updated.getIsbn());
         assertEquals("Новое название", updated.getTitle());
@@ -185,7 +186,7 @@ class LibraryServiceImplTest {
 
         BusinessRuleException ex = assertThrows(
                 BusinessRuleException.class,
-                () -> service.editBook(book.getId(), "Измененная", "Новый автор", RAW_ISBN, List.of("Наука"))
+                () -> service.editBook(book.getId(), new BookData("Измененная", "Новый автор", RAW_ISBN, List.of("Наука")))
         );
         assertEquals("Книга с ISBN 9785446109609 уже есть в каталоге", ex.getMessage());
 
@@ -202,7 +203,7 @@ class LibraryServiceImplTest {
 
         ValidationException ex = assertThrows(
                 ValidationException.class,
-                () -> service.editBook(book.getId(), "Новое", "Новый автор", "bad-isbn", List.of("Наука"))
+                () -> service.editBook(book.getId(), new BookData("Новое", "Новый автор", "bad-isbn", List.of("Наука")))
         );
         assertEquals("Некорректный формат ISBN", ex.getMessage());
 
@@ -219,8 +220,8 @@ class LibraryServiceImplTest {
 
         ValidationException ex = assertThrows(
                 ValidationException.class,
-                () -> service.editBook(book.getId(), "Новое название", "Новый автор", OTHER_ISBN,
-                        List.of("1", "2", "3", "4"))
+                () -> service.editBook(book.getId(), new BookData("Новое название", "Новый автор", OTHER_ISBN,
+                        List.of("1", "2", "3", "4")))
         );
         assertEquals("Количество жанров не может превышать 3", ex.getMessage());
 
@@ -238,13 +239,13 @@ class LibraryServiceImplTest {
 
         NotFoundException exUnknown = assertThrows(
                 NotFoundException.class,
-                () -> service.editBook(unknownId, "Title", "Author", ISBN, List.of("IT"))
+                () -> service.editBook(unknownId, new BookData("Title", "Author", ISBN, List.of("IT")))
         );
         assertEquals("Книга с ID " + unknownId + " не найдена", exUnknown.getMessage());
 
         NotFoundException exNull = assertThrows(
                 NotFoundException.class,
-                () -> service.editBook(null, "Title", "Author", ISBN, List.of("IT"))
+                () -> service.editBook(null, new BookData("Title", "Author", ISBN, List.of("IT")))
         );
         assertEquals("Идентификатор книги не может быть null", exNull.getMessage());
     }
@@ -256,8 +257,8 @@ class LibraryServiceImplTest {
         stubValidIsbn(ISBN, ISBN);
         when(repository.findByIsbn(ISBN)).thenReturn(Optional.of(book));
 
-        Book edited = service.editBook(book.getId(), "Чистый код 2", "Роберт Мартин", ISBN,
-                List.of("IT", "Архитектура"));
+        Book edited = service.editBook(book.getId(), new BookData("Чистый код 2", "Роберт Мартин", ISBN,
+                List.of("IT", "Архитектура")));
 
         assertEquals(BookStatus.BORROWED, edited.getStatus());
         assertEquals("Алексей", edited.getBorrowerName());
@@ -270,7 +271,7 @@ class LibraryServiceImplTest {
         stubValidIsbn(ISBN, ISBN);
         when(repository.findByIsbn(ISBN)).thenReturn(Optional.of(book));
 
-        Book edited = service.editBook(book.getId(), "Новое название", "Роберт Мартин", ISBN, book.getGenres());
+        Book edited = service.editBook(book.getId(), new BookData("Новое название", "Роберт Мартин", ISBN, book.getGenres()));
 
         assertEquals("Новое название", edited.getTitle());
         assertEquals(List.of("IT", "Архитектура"), edited.getGenres());
