@@ -34,8 +34,17 @@ public class Book extends AbstractEntity<UUID> {
         this.borrowerName = null;
     }
 
-    public Book(UUID id, String title, String author, String isbn, List<String> genres,
-                BookStatus status, String borrowerName, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Book(
+            UUID id,
+            String title,
+            String author,
+            String isbn,
+            List<String> genres,
+            BookStatus status,
+            String borrowerName,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
         super(id, createdAt, updatedAt);
         ValidatedData validated = BookValidator.validateAndNormalize(title, author, isbn, genres);
         this.title = validated.title();
@@ -43,17 +52,7 @@ public class Book extends AbstractEntity<UUID> {
         this.isbn = validated.isbn();
         this.genres.addAll(validated.genres());
         this.status = Objects.requireNonNull(status, "Статус книги не может быть null");
-        if (this.status == BookStatus.AVAILABLE) {
-            if (borrowerName != null && !borrowerName.isBlank()) {
-                throw new ValidationException("У книги в наличии не должно быть читателя");
-            }
-            this.borrowerName = null;
-        } else {
-            if (borrowerName == null || borrowerName.isBlank()) {
-                throw new ValidationException("Для выданной книги должно быть указано имя читателя");
-            }
-            this.borrowerName = borrowerName.trim();
-        }
+        this.borrowerName = BookValidator.validateBorrower(this.status, borrowerName);
     }
 
     public void setTitle(String title) {
