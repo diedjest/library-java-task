@@ -1,5 +1,6 @@
 package ru.vsu.cs.uvarovdp.service.impl;
 
+import ru.vsu.cs.uvarovdp.dto.BookData;
 import ru.vsu.cs.uvarovdp.entity.Book;
 import ru.vsu.cs.uvarovdp.ex.BusinessRuleException;
 import ru.vsu.cs.uvarovdp.ex.BusinessRuleType;
@@ -27,21 +28,22 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    public Book addBook(String title, String author, String isbn, List<String> genres) {
-        checkIsbnAvailable(isbn, null);
-        String normalizedIsbn = isbnValidator.normalize(isbn);
-        Book book = new Book(title, author, normalizedIsbn, genres);
+    public Book addBook(BookData data) {
+        checkIsbnAvailable(data.isbn(), null);
+        String normalizedIsbn = isbnValidator.normalize(data.isbn());
+        Book book = new Book(data.title(), data.author(), normalizedIsbn, data.genres());
         bookRepository.save(book);
         return book;
     }
 
     @Override
-    public Book editBook(UUID bookId, String title, String author, String isbn, List<String> genres) {
+    public Book editBook(UUID bookId, BookData data) {
         Book book = getBookOrThrow(bookId);
-        checkIsbnAvailable(isbn, bookId);
-        String normalizedIsbn = isbnValidator.normalize(isbn);
+        checkIsbnAvailable(data.isbn(), bookId);
+        String normalizedIsbn = isbnValidator.normalize(data.isbn());
 
-        ValidatedData validated = BookValidator.validateAndNormalize(title, author, normalizedIsbn, genres);
+        ValidatedData validated = BookValidator.validateAndNormalize(
+                data.title(), data.author(), normalizedIsbn, data.genres());
         book.setTitle(validated.title());
         book.setAuthor(validated.author());
         book.setIsbn(validated.isbn());
