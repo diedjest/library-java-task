@@ -2,10 +2,9 @@ package ru.vsu.cs.uvarovdp.repository.impl;
 
 import ru.vsu.cs.uvarovdp.entity.Book;
 import ru.vsu.cs.uvarovdp.repository.BookRepository;
-import ru.vsu.cs.uvarovdp.util.AuthorNameUtils;
+import ru.vsu.cs.uvarovdp.util.BookComparators;
 import ru.vsu.cs.uvarovdp.util.StringUtils;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -15,12 +14,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class InMemoryBookRepository implements BookRepository {
-
-    private static final Comparator<Book> BY_AUTHOR_THEN_TITLE_COMPARATOR =
-            Comparator.comparing((Book book) -> AuthorNameUtils.extractSurname(book.getAuthor()), String.CASE_INSENSITIVE_ORDER)
-                    .thenComparing(Book::getAuthor, String.CASE_INSENSITIVE_ORDER)
-                    .thenComparing(Book::getTitle, String.CASE_INSENSITIVE_ORDER)
-                    .thenComparing(Book::getIsbn);
 
     private final Map<UUID, Book> storage = new HashMap<>();
 
@@ -52,7 +45,7 @@ public class InMemoryBookRepository implements BookRepository {
     @Override
     public List<Book> findAll() {
         return storage.values().stream()
-                .sorted(BY_AUTHOR_THEN_TITLE_COMPARATOR)
+                .sorted(BookComparators.BY_AUTHOR_THEN_TITLE)
                 .toList();
     }
 
@@ -64,7 +57,7 @@ public class InMemoryBookRepository implements BookRepository {
         String lowerQuery = query.trim().toLowerCase(Locale.ROOT);
         return storage.values().stream()
                 .filter(book -> book.getAuthor().toLowerCase(Locale.ROOT).contains(lowerQuery))
-                .sorted(BY_AUTHOR_THEN_TITLE_COMPARATOR)
+                .sorted(BookComparators.BY_AUTHOR_THEN_TITLE)
                 .toList();
     }
 
