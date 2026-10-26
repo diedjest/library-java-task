@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-book-genres
+      author: uvarovdp
+      changes:
+        - createTable:
+            tableName: book_genres
+            columns:
+              - column:
+                  name: book_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_book_genres_book
+                    references: books(id)
+                    deleteCascade: true
+              - column:
+                  name: position
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: genre
+                  type: text
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: book_genres
+            columnNames: book_id, position
+            constraintName: pk_book_genres
+      rollback:
+        - dropTable:
+            tableName: book_genres

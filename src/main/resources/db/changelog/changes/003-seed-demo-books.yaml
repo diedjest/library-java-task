@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-seed-demo-books
+      author: uvarovdp
+      changes:
+        - insert:
+            tableName: books
+            columns:
+              - column: { name: id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0001" }
+              - column: { name: title, value: "Преступление и наказание" }
+              - column: { name: author, value: "Фёдор Достоевский" }
+              - column: { name: isbn, value: "9785041166403" }
+              - column: { name: status, value: "AVAILABLE" }
+              - column: { name: created_at, valueComputed: "now()" }
+              - column: { name: updated_at, valueComputed: "now()" }
+        - insert:
+            tableName: books
+            columns:
+              - column: { name: id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0002" }
+              - column: { name: title, value: "Война и мир" }
+              - column: { name: author, value: "Лев Толстой" }
+              - column: { name: isbn, value: "9785041166410" }
+              - column: { name: status, value: "BORROWED" }
+              - column: { name: borrower_name, value: "Алексей Смирнов" }
+              - column: { name: created_at, valueComputed: "now()" }
+              - column: { name: updated_at, valueComputed: "now()" }
+        - insert:
+            tableName: books
+            columns:
+              - column: { name: id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0003" }
+              - column: { name: title, value: "Мастер и Маргарита" }
+              - column: { name: author, value: "Михаил Булгаков" }
+              - column: { name: isbn, value: "9785041166427" }
+              - column: { name: status, value: "AVAILABLE" }
+              - column: { name: created_at, valueComputed: "now()" }
+              - column: { name: updated_at, valueComputed: "now()" }
+        - insert:
+            tableName: books
+            columns:
+              - column: { name: id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0004" }
+              - column: { name: title, value: "Мёртвые души" }
+              - column: { name: author, value: "Николай Гоголь" }
+              - column: { name: isbn, value: "9785041166434" }
+              - column: { name: status, value: "AVAILABLE" }
+              - column: { name: created_at, valueComputed: "now()" }
+              - column: { name: updated_at, valueComputed: "now()" }
+
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0001" } }, { column: { name: position, valueNumeric: 0 } }, { column: { name: genre, value: "Русская классика" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0001" } }, { column: { name: position, valueNumeric: 1 } }, { column: { name: genre, value: "Роман" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0001" } }, { column: { name: position, valueNumeric: 2 } }, { column: { name: genre, value: "Психологический роман" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0002" } }, { column: { name: position, valueNumeric: 0 } }, { column: { name: genre, value: "Русская классика" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0002" } }, { column: { name: position, valueNumeric: 1 } }, { column: { name: genre, value: "Роман-эпопея" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0003" } }, { column: { name: position, valueNumeric: 0 } }, { column: { name: genre, value: "Русская классика" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0003" } }, { column: { name: position, valueNumeric: 1 } }, { column: { name: genre, value: "Мистика" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0003" } }, { column: { name: position, valueNumeric: 2 } }, { column: { name: genre, value: "Сатира" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0004" } }, { column: { name: position, valueNumeric: 0 } }, { column: { name: genre, value: "Русская классика" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0004" } }, { column: { name: position, valueNumeric: 1 } }, { column: { name: genre, value: "Поэма" } } ] }
+        - insert: { tableName: book_genres, columns: [ { column: { name: book_id, value: "0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0004" } }, { column: { name: position, valueNumeric: 2 } }, { column: { name: genre, value: "Сатира" } } ] }
+      rollback:
+        - delete:
+            tableName: books
+            where: id IN ('0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0001', '0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0002', '0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0003', '0b1f6a54-6f3c-4e5b-9d57-1f0f3c9a0004')
