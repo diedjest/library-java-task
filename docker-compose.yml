@@ -28,4 +28,4 @@ services:
     tty: true
 
 volumes:
-  library-data:заком
+  library-data:
