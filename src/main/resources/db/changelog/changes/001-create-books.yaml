@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-books
+      author: uvarovdp
+      changes:
+        - createTable:
+            tableName: books
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_books
+              - column:
+                  name: title
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: isbn
+                  type: varchar(13)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_books_isbn
+              - column:
+                  name: status
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: borrower_name
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >
+              ALTER TABLE books ADD CONSTRAINT ck_books_status
+              CHECK (status IN ('AVAILABLE', 'BORROWED'))
+        - sql:
+            sql: >
+              ALTER TABLE books ADD CONSTRAINT ck_books_borrower
+              CHECK ((status = 'BORROWED' AND borrower_name IS NOT NULL)
+                  OR (status = 'AVAILABLE' AND borrower_name IS NULL))
+        - createIndex:
+            tableName: books
+            indexName: idx_books_author
+            columns:
+              - column:
+                  name: author
+      rollback:
+        - dropTable:
+            tableName: books
